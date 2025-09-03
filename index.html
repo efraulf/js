@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Para ihop nätverksbegrepp</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+    }
+    .list {
+      flex: 1;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .item {
+      padding: 8px;
+      margin: 6px 0;
+      background: #e0e7ff;
+      border-radius: 6px;
+      cursor: grab;
+    }
+    .dropzone {
+      padding: 8px;
+      margin: 6px 0;
+      background: #f1f5f9;
+      border: 2px dashed #94a3b8;
+      border-radius: 6px;
+      min-height: 30px;
+    }
+    .correct { background: #bbf7d0 !important; }
+    .wrong { background: #fecaca !important; }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Para ihop nätverksbegrepp</h1>
+  <p>Dra begreppen (vänster) till rätt beskrivning (höger).</p>
+  <div class="container">
+    <div class="list" id="terms">
+      <h3>Begrepp</h3>
+    </div>
+    <div class="list" id="definitions">
+      <h3>Beskrivningar</h3>
+    </div>
+  </div>
+  <button onclick="checkAnswers()">Kontrollera svar</button>
+  <button onclick="resetGame()">Återställ</button>
+
+  <script>
+    const pairs = {
+      "Server": "Tillhandahåller tjänster",
+      "Klient": "Tar del av tjänster",
+      "Nätverk": "Enheter som kommunicerar",
+      "LAN, WAN, WLAN, MAN": "Olika typer av nätverk",
+      "Internet": "WAN",
+      "Topologi": "Nätverkskarta",
+      "Switch, Router, Hemmarouter": "Flera exempel på olika nätverksutrustning",
+      "Switch": "Lager 2 enhet som hanterar ramar",
+      "Router": "Lager 3 enhet som hanterar paket",
+      "Olika typer av fiberkablar": "Multimode & Singelmode",
+      "WiFi": "802.11 standard",
+      "Fiber": "Använder optiska signaler för att skicka ”data”",
+      "WiFi2": "Använder radiovågor för att skicka ”data”",
+      "Ethernet/TP": "Använder elektiska signaler för att skicka ”data”",
+      "TP": "Akronym för TwistedPair",
+      "Frame": "”Data-enhet” på lager 2",
+      "Paket": "”Data-enhet” på lager 3",
+      "Brandvägg": "Används för att tillåta eller blockera nätverkstrafik",
+      "ARP-tabell": "Kopplar ihop en mac-adress med rätt ip-adress",
+      "Mediaomvandlare": "Kan t.ex: konvertera elektriska signaler till optiska",
+      "ISR": "Multifunktionsrouter (t.ex: router, switch, accesspunkt och brandvägg)",
+      "Repeater": "Tar emot en signal, förstärker den och skickar vidare",
+      "Singlemodekabel": "Mest lämpligt för långa avstånd (upp till 100 km)"
+    };
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function initGame() {
+      const terms = Object.keys(pairs);
+      const definitions = Object.values(pairs);
+
+      const termsDiv = document.getElementById("terms");
+      const defsDiv = document.getElementById("definitions");
+
+      termsDiv.innerHTML = "<h3>Begrepp</h3>";
+      defsDiv.innerHTML = "<h3>Beskrivningar</h3>";
+
+      shuffle(terms).forEach(term => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.draggable = true;
+        div.textContent = term.replace("2", "");
+        div.dataset.term = term;
+        div.addEventListener("dragstart", drag);
+        termsDiv.appendChild(div);
+      });
+
+      shuffle(definitions).forEach(def => {
+        const drop = document.createElement("div");
+        drop.className = "dropzone";
+        drop.textContent = def;
+        drop.dataset.definition = def;
+        drop.addEventListener("dragover", allowDrop);
+        drop.addEventListener("drop", dropIt);
+        defsDiv.appendChild(drop);
+      });
+    }
+
+    function drag(ev) {
+      ev.dataTransfer.setData("text", ev.target.dataset.term);
+    }
+
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+
+    function dropIt(ev) {
+      ev.preventDefault();
+      const zone = ev.target;
+      const term = ev.dataTransfer.getData("text");
+
+      // Om zonen redan har ett ord -> flytta tillbaka det gamla till vänsterlistan
+      if (zone.dataset.matched) {
+        const oldTerm = zone.dataset.matched;
+        const termsDiv = document.getElementById("terms");
+        const div = document.createElement("div");
+        div.className = "item";
+        div.draggable = true;
+        div.textContent = oldTerm.replace("2", "");
+        div.dataset.term = oldTerm;
+        div.addEventListener("dragstart", drag);
+        termsDiv.appendChild(div);
+      }
+
+      // Placera det nya ordet i zonen
+      zone.innerHTML = `${zone.dataset.definition}<br><strong>${term.replace("2", "")}</strong>`;
+      zone.dataset.matched = term;
+
+      // Ta bort begreppet från listan
+      const draggedItem = document.querySelector(`.item[data-term='${term}']`);
+      if (draggedItem) {
+        draggedItem.remove();
+      }
+    }
+
+    function checkAnswers() {
+      document.querySelectorAll(".dropzone").forEach(zone => {
+        const matched = zone.dataset.matched;
+        if (!matched) return;
+        if (pairs[matched] === zone.dataset.definition) {
+          zone.classList.add("correct");
+          zone.classList.remove("wrong");
+        } else {
+          zone.classList.add("wrong");
+          zone.classList.remove("correct");
+        }
+      });
+    }
+
+    function resetGame() {
+      initGame();
+    }
+
+    // Starta spelet direkt
+    initGame();
+  </script>
+</body>
+</html>
